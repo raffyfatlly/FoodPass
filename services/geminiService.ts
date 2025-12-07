@@ -3,15 +3,25 @@ import { ScanResult, DeclaredItem } from "../types";
 
 // Helper to securely retrieve API key from various environment configurations
 const getApiKey = (): string => {
-  // 1. Check standard process.env (often used in these demo environments)
-  if (typeof process !== 'undefined' && process.env.API_KEY) {
-    return process.env.API_KEY;
-  }
-  // 2. Check Vite specific environment variable (standard for Vite apps)
-  // @ts-ignore - Supressing TS error for import.meta if types aren't set
-  if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_KEY) {
+  // Priority 1: Vite Environment Variables (Vercel/Netlify standard)
+  try {
     // @ts-ignore
-    return import.meta.env.VITE_API_KEY;
+    if (import.meta && import.meta.env && import.meta.env.VITE_API_KEY) {
+      // @ts-ignore
+      return import.meta.env.VITE_API_KEY;
+    }
+  } catch (e) {
+    // import.meta.env might not be defined or available
+  }
+  
+  // Priority 2: Process Environment Variables (Node/Webpack/Legacy)
+  try {
+    // Accessing 'process' directly can crash Vite/Browser if not polyfilled, so we wrap in try/catch
+    if (typeof process !== 'undefined' && process.env && process.env.API_KEY) {
+      return process.env.API_KEY;
+    }
+  } catch (e) {
+    // Ignore ReferenceError if process is not defined
   }
   
   // Fallback or empty (will cause API error if not set)
