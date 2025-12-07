@@ -166,11 +166,11 @@ const ItemForm: React.FC<ItemFormProps> = ({ initialData, onSave, onCancel }) =>
 
                 <div className="space-y-2">
                     <label className="text-xs font-bold text-slate-400 ml-1 uppercase tracking-wider">Quantity</label>
-                    <div className="flex items-center gap-1 bg-slate-50 p-1.5 rounded-2xl border border-transparent focus-within:ring-4 focus-within:ring-brand-500/10 focus-within:border-brand-500/20 focus-within:bg-white transition-all h-[54px]">
+                    <div className="flex items-center gap-1 bg-slate-50 p-1.5 rounded-2xl border border-transparent focus-within:ring-4 focus-within:ring-brand-500/10 focus-within:border-brand-500/20 focus-within:bg-white transition-all h-[54px] w-full overflow-hidden">
                         <button 
                             type="button" 
                             onClick={() => setFormData(p => ({...p, quantity: Math.max(1, p.quantity - 1)}))}
-                            className="w-10 h-full rounded-xl bg-white shadow-sm flex items-center justify-center text-slate-600 font-bold text-xl active:scale-90 transition-transform hover:bg-slate-50"
+                            className="w-10 h-full rounded-xl bg-white shadow-sm flex items-center justify-center text-slate-600 font-bold text-xl active:scale-90 transition-transform hover:bg-slate-50 shrink-0"
                         >
                             -
                         </button>
@@ -180,12 +180,12 @@ const ItemForm: React.FC<ItemFormProps> = ({ initialData, onSave, onCancel }) =>
                             required
                             value={formData.quantity}
                             onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) || 0 })}
-                            className="flex-1 bg-transparent border-0 text-slate-900 font-bold text-xl text-center focus:ring-0 outline-none p-0"
+                            className="flex-1 w-0 min-w-0 bg-transparent border-0 text-slate-900 font-bold text-xl text-center focus:ring-0 outline-none p-0 appearance-none"
                         />
                         <button 
                             type="button" 
                             onClick={() => setFormData(p => ({...p, quantity: p.quantity + 1}))}
-                            className="w-10 h-full rounded-xl bg-brand-500 shadow-sm flex items-center justify-center text-white font-bold text-xl active:scale-90 transition-transform hover:bg-brand-600"
+                            className="w-10 h-full rounded-xl bg-brand-500 shadow-sm flex items-center justify-center text-white font-bold text-xl active:scale-90 transition-transform hover:bg-brand-600 shrink-0"
                         >
                             +
                         </button>
