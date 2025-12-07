@@ -164,11 +164,11 @@ const Scanner: React.FC<ScannerProps> = ({ onScan, onTextSearch, onManualAdd, is
                  <div className="w-20 h-20 rounded-full bg-brand-50 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300 shadow-sm">
                     <Camera className="w-8 h-8 text-brand-500" />
                  </div>
-                 <div className="text-center px-6">
+                 <div className="text-center px-6 flex flex-col items-center">
                     <h3 className="text-xl font-bold text-slate-800">Scan Food</h3>
                     <p className="text-sm text-slate-400 mt-1">Tap to open camera</p>
-                    <p className="text-[10px] text-slate-400 mt-2 font-medium opacity-70">
-                        Capture ingredients list for best accuracy
+                    <p className="text-[10px] text-slate-400 mt-2 font-medium opacity-80 max-w-[200px] leading-tight">
+                        Tip: Ensure ingredient list on packaging is visible for best results
                     </p>
                  </div>
                </>
