@@ -12,30 +12,37 @@ import { generateDeclarationPDF } from './services/pdfService';
 import { Zap, FileText, MessageCircleQuestion, Eye } from 'lucide-react';
 
 const App: React.FC = () => {
-  const [items, setItems] = useState<DeclaredItem[]>([]);
+  // Use lazy initialization to reliably load from localStorage on first render
+  const [items, setItems] = useState<DeclaredItem[]>(() => {
+    try {
+      const saved = localStorage.getItem('customsItems');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      console.error("Failed to load items", e);
+      return [];
+    }
+  });
+
+  const [destinationCountry, setDestinationCountry] = useState<string>(() => {
+    try {
+      return localStorage.getItem('destinationCountry') || "Australia";
+    } catch (e) {
+      return "Australia";
+    }
+  });
+
   const [isProcessing, setIsProcessing] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [currentScan, setCurrentScan] = useState<ScanResult | null>(null);
   const [editingItem, setEditingItem] = useState<DeclaredItem | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [destinationCountry, setDestinationCountry] = useState<string>("Australia");
   const [showChat, setShowChat] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   
   // Notification State
   const [notification, setNotification] = useState<{msg: string, type: NotificationType} | null>(null);
 
-  // Load from local storage
-  useEffect(() => {
-    const saved = localStorage.getItem('customsItems');
-    if (saved) {
-      try { setItems(JSON.parse(saved)); } catch (e) {}
-    }
-    const savedCountry = localStorage.getItem('destinationCountry');
-    if (savedCountry) { setDestinationCountry(savedCountry); }
-  }, []);
-
-  // Save to local storage
+  // Persist items whenever they change
   useEffect(() => {
     try {
         localStorage.setItem('customsItems', JSON.stringify(items));
@@ -44,6 +51,7 @@ const App: React.FC = () => {
     }
   }, [items]);
 
+  // Persist country whenever it changes
   useEffect(() => {
     localStorage.setItem('destinationCountry', destinationCountry);
   }, [destinationCountry]);
@@ -137,9 +145,7 @@ const App: React.FC = () => {
     setEditingItem(null);
 
     // AI Context Check - Triggered immediately after adding/updating
-    // We use the 'updatedItems' local variable to ensure we have the latest data
     try {
-      // Small delay to let the UI close the modal first
       setTimeout(async () => {
         const advice = await getCustomsAdvice(updatedItems, destinationCountry);
         showNotification(advice, "ai");
@@ -153,17 +159,22 @@ const App: React.FC = () => {
     setItems((prev) => prev.filter((i) => i.id !== id));
   };
 
+  const handleClearAll = () => {
+    if (items.length === 0) return;
+    if (window.confirm("Are you sure you want to reset your list? This will remove all items.")) {
+      setItems([]);
+      showNotification("List has been reset.", "info");
+    }
+  };
+
   const handleExportPDF = async () => {
     if (items.length === 0) return;
     
-    // 1. Notify Downloading
     showNotification("Generating compliant report...", "info");
     
-    // 2. Generate PDF (Small delay to allow UI to update)
     await new Promise(r => setTimeout(r, 500));
     generateDeclarationPDF(items);
     
-    // 3. Notify Success
     showNotification("Report downloaded successfully!", "success");
   };
 
@@ -241,7 +252,12 @@ const App: React.FC = () => {
 
         {/* List */}
         <section className="animate-in slide-in-from-bottom-5 duration-500 delay-300 w-full">
-          <DeclarationList items={items} onDelete={handleDeleteItem} onEdit={handleEditItem} />
+          <DeclarationList 
+            items={items} 
+            onDelete={handleDeleteItem} 
+            onEdit={handleEditItem}
+            onClearAll={handleClearAll}
+          />
         </section>
 
       </main>

@@ -1,14 +1,15 @@
 import React from 'react';
 import { DeclaredItem } from '../types';
-import { Trash2, ShoppingBag, ImageOff, Edit3 } from 'lucide-react';
+import { Trash2, ShoppingBag, ImageOff, RotateCcw } from 'lucide-react';
 
 interface DeclarationListProps {
   items: DeclaredItem[];
   onDelete: (id: string) => void;
   onEdit: (item: DeclaredItem) => void;
+  onClearAll: () => void;
 }
 
-const DeclarationList: React.FC<DeclarationListProps> = ({ items, onDelete, onEdit }) => {
+const DeclarationList: React.FC<DeclarationListProps> = ({ items, onDelete, onEdit, onClearAll }) => {
   if (items.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-slate-400 mt-2">
@@ -25,6 +26,16 @@ const DeclarationList: React.FC<DeclarationListProps> = ({ items, onDelete, onEd
     <div className="space-y-6 pb-32">
       <div className="flex justify-between items-end px-2">
         <h3 className="text-2xl font-bold text-slate-900 tracking-tight">Your Items <span className="bg-slate-100 text-slate-500 text-sm font-bold px-2 py-1 rounded-lg ml-2 align-middle">{items.length}</span></h3>
+        
+        {items.length > 0 && (
+          <button
+            onClick={onClearAll}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors text-xs font-bold"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            Reset
+          </button>
+        )}
       </div>
       
       <div className="space-y-4">

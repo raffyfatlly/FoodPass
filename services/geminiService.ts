@@ -1,6 +1,23 @@
 import { GoogleGenAI, Type, Schema } from "@google/genai";
 import { ScanResult, DeclaredItem } from "../types";
 
+// Helper to securely retrieve API key from various environment configurations
+const getApiKey = (): string => {
+  // 1. Check standard process.env (often used in these demo environments)
+  if (typeof process !== 'undefined' && process.env.API_KEY) {
+    return process.env.API_KEY;
+  }
+  // 2. Check Vite specific environment variable (standard for Vite apps)
+  // @ts-ignore - Supressing TS error for import.meta if types aren't set
+  if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_KEY) {
+    // @ts-ignore
+    return import.meta.env.VITE_API_KEY;
+  }
+  
+  // Fallback or empty (will cause API error if not set)
+  return "";
+};
+
 const itemSchema: Schema = {
   type: Type.OBJECT,
   properties: {
@@ -30,7 +47,7 @@ const itemSchema: Schema = {
 
 export const analyzeImage = async (base64Image: string, destinationCountry: string): Promise<ScanResult> => {
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: getApiKey() });
     
     // We pass the destination country just for context if it helps identification
     const prompt = `Analyze this food item.
@@ -75,7 +92,7 @@ export const analyzeImage = async (base64Image: string, destinationCountry: stri
 
 export const analyzeText = async (query: string, destinationCountry: string): Promise<ScanResult> => {
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: getApiKey() });
     
     const prompt = `User is listing a food item: "${query}".
     1. Identify the Brand and likely Product Name.
@@ -109,7 +126,7 @@ export const analyzeText = async (query: string, destinationCountry: string): Pr
 
 export const getCustomsAdvice = async (items: DeclaredItem[], country: string): Promise<string> => {
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: getApiKey() });
     
     const itemList = items.map(i => `${i.quantity}x ${i.name} (${i.ingredients})`).join(", ");
     
@@ -134,21 +151,19 @@ export const getCustomsAdvice = async (items: DeclaredItem[], country: string): 
 
 export const chatWithCustomsAgent = async (history: {role: string, parts: {text: string}[]}[], message: string, country: string): Promise<string> => {
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: getApiKey() });
     
-    const systemPrompt = `You are an expert Customs Officer Assistant specializing in food regulations for travelers entering ${country}.
-    Your goal is to help the user understand what food they can bring, what needs declaring, and what is banned.
+    const systemPrompt = `TASK: You are a strict Customs Officer Assistant for ${country}.
     
-    CRITICAL INSTRUCTION:
-    - NEVER start your response with "Hello", "Hi", "Greetings", "Welcome", or any other salutation. 
-    - Start your response IMMEDIATELY with the answer or relevant information.
+    CRITICAL BEHAVIOR RULES:
+    1. NO GREETINGS. Do not use words like "Hello", "Hi", "Welcome", "Greetings".
+    2. Go STRAIGHT to the answer.
+    3. If the user asks "Can I bring X?", answer "Yes/No" or "It depends" immediately, then explain.
     
-    STRICT RULES:
-    1. Be concise, friendly, and professional.
-    2. Focus specifically on ${country}'s bio-security and customs rules.
-    3. ABSOLUTELY NO MARKDOWN. Do not use asterisks (**bold**), underscores (_italic_), or hash signs (#). Write in plain text only.
-    4. Use standard capitalization and punctuation.
-    5. Keep answers short (under 3 sentences) unless asked for specific details.`;
+    CONTENT RULES:
+    1. Focus specifically on ${country}'s bio-security and customs rules.
+    2. ABSOLUTELY NO MARKDOWN. Write in plain text only.
+    3. Keep answers concise (max 3 sentences) unless detailed explanation is needed.`;
 
     const chat = ai.chats.create({
       model: "gemini-2.5-flash",
