@@ -2,11 +2,27 @@
 import { GoogleGenAI } from "@google/genai";
 import { ScanResult } from "../types";
 
-// Note: itemSchema is removed as we must parse JSON manually when using tools: [googleSearch]
+// Helper to retrieve API Key safely from either Node env (Preview) or Vite env (Vercel)
+const getApiKey = (): string => {
+  // 1. Check process.env (Standard Node/System)
+  if (typeof process !== 'undefined' && process.env && process.env.API_KEY) {
+    return process.env.API_KEY;
+  }
+  // 2. Check import.meta.env (Vite/Vercel)
+  // Note: You must set VITE_API_KEY in your Vercel Project Settings
+  if (typeof import.meta !== 'undefined' && (import.meta as any).env && (import.meta as any).env.VITE_API_KEY) {
+    return (import.meta as any).env.VITE_API_KEY;
+  }
+  
+  console.warn("Gemini API Key is missing. Please set VITE_API_KEY in your environment variables.");
+  return "";
+};
+
+const API_KEY = getApiKey();
 
 export const analyzeImage = async (base64Image: string): Promise<ScanResult> => {
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: API_KEY });
     
     // Updated prompt to leverage Google Search for better accuracy
     const prompt = `Analyze this food product image.
@@ -69,7 +85,7 @@ export const analyzeImage = async (base64Image: string): Promise<ScanResult> => 
 
 export const analyzeText = async (query: string): Promise<ScanResult> => {
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: API_KEY });
     
     const prompt = `User is looking for details of this food product: "${query}".
     
@@ -127,7 +143,7 @@ export const chatWithCustomsAgent = async (
   destinationCountry: string
 ): Promise<string> => {
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: API_KEY });
 
     const chat = ai.chats.create({
       model: "gemini-2.5-flash",
