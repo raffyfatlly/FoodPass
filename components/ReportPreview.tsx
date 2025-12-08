@@ -34,9 +34,6 @@ const ReportPreview: React.FC<ReportPreviewProps> = ({ items, onClose }) => {
                     <h1 className="text-2xl font-bold text-slate-900 uppercase tracking-wide">Food Inventory</h1>
                     <p className="text-slate-500 text-sm mt-1">Item List</p>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm font-bold text-slate-800">{new Date().toLocaleDateString()}</p>
-                  </div>
                </div>
             </div>
 

@@ -1,15 +1,22 @@
+
 import React, { useState, useEffect } from 'react';
 import Scanner from './components/Scanner';
 import ItemForm from './components/ItemForm';
 import DeclarationList from './components/DeclarationList';
 import Notification, { NotificationType } from './components/Notification';
 import ReportPreview from './components/ReportPreview';
+import AccessGate from './components/AccessGate';
 import { DeclaredItem, ScanResult } from './types';
 import { analyzeImage, analyzeText } from './services/geminiService';
 import { generateDeclarationPDF } from './services/pdfService';
+import { isAuthenticated } from './services/authService';
 import { Zap, FileText, Eye } from 'lucide-react';
 
 const App: React.FC = () => {
+  // Auth State
+  const [isAuthorized, setIsAuthorized] = useState<boolean>(false);
+  const [authChecked, setAuthChecked] = useState(false);
+
   // Use lazy initialization to reliably load from localStorage on first render
   const [items, setItems] = useState<DeclaredItem[]>(() => {
     try {
@@ -30,6 +37,13 @@ const App: React.FC = () => {
   
   // Notification State
   const [notification, setNotification] = useState<{msg: string, type: NotificationType} | null>(null);
+
+  // Check Auth on Mount
+  useEffect(() => {
+    const authorized = isAuthenticated();
+    setIsAuthorized(authorized);
+    setAuthChecked(true);
+  }, []);
 
   // Persist items whenever they change
   useEffect(() => {
@@ -152,6 +166,13 @@ const App: React.FC = () => {
     showNotification("List downloaded successfully!", "success");
   };
 
+  // --- Auth Guard ---
+  if (!authChecked) return null; // Or a loading spinner
+  
+  if (!isAuthorized) {
+    return <AccessGate onUnlock={() => setIsAuthorized(true)} />;
+  }
+
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-slate-900 font-sans selection:bg-brand-100 relative pb-32">
       
@@ -220,10 +241,10 @@ const App: React.FC = () => {
             {/* View Report Button */}
             <button 
               onClick={() => setShowPreview(true)}
-              className="flex-1 bg-white border border-slate-200 text-brand-500 font-bold text-lg py-4 rounded-[1.25rem] shadow-sm flex items-center justify-center gap-2 active:scale-[0.97] transition-all hover:bg-slate-50 hover:border-brand-200"
+              className="flex-1 bg-white border border-slate-200 text-brand-500 font-bold text-sm py-4 rounded-[1.25rem] shadow-sm flex items-center justify-center gap-2 active:scale-[0.97] transition-all hover:bg-slate-50 hover:border-brand-200"
             >
                <Eye className="w-5 h-5" />
-               <span className="text-base">Preview</span>
+               <span className="text-sm">Preview</span>
             </button>
             
             {/* Generate PDF Button */}

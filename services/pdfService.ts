@@ -17,7 +17,7 @@ export const generateDeclarationPDF = (items: DeclaredItem[]) => {
   
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
-  doc.text(`Date: ${new Date().toLocaleDateString()}`, 14, 32);
+  // Date removed
 
   // -- Table --
   // Prepare body data
