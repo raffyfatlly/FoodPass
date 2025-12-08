@@ -72,13 +72,18 @@ const App: React.FC = () => {
           const result = await analyzeImage(base64Content);
           setCurrentScan({ ...result, image: fullBase64 });
           setShowForm(true);
-        } catch (err) {
-          setErrorMsg("Could not identify food item. Please type name.");
-          setCurrentScan({ 
-            brand: '', name: '', ingredients: '', weight: '', quantity: 1, 
-            image: fullBase64 
-          });
-          setShowForm(true);
+        } catch (err: any) {
+          if (err.message === 'NOT_FOOD') {
+            showNotification("That doesn't look like food or drink.", "info");
+            // Do NOT open the form if it's explicitly not food
+          } else {
+            setErrorMsg("Could not identify food item. Please type name.");
+            setCurrentScan({ 
+              brand: '', name: '', ingredients: '', weight: '', quantity: 1, 
+              image: fullBase64 
+            });
+            setShowForm(true);
+          }
         } finally {
           setIsProcessing(false);
         }

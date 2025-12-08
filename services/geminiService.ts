@@ -1,4 +1,3 @@
-
 import { GoogleGenAI } from "@google/genai";
 import { ScanResult } from "../types";
 
@@ -24,10 +23,16 @@ export const analyzeImage = async (base64Image: string): Promise<ScanResult> => 
   try {
     const ai = new GoogleGenAI({ apiKey: API_KEY });
     
-    // Updated prompt to leverage Google Search for better accuracy
-    const prompt = `Analyze this food product image.
-    1. Visually identify the exact Brand and Product Name.
-    2. USE GOOGLE SEARCH to find the official commercial details for this specific product:
+    // Updated prompt to check for food/drink relevance first
+    const prompt = `Analyze this image.
+    1. First, determine if the main subject is a food or drink product (packaged or prepared).
+    
+    If it is NOT a food or drink item (e.g. electronic, clothing, furniture, person, vehicle, etc.), return exactly this JSON:
+    { "error": "not_food" }
+    
+    If it IS a food or drink item:
+    2. Visually identify the exact Brand and Product Name.
+    3. USE GOOGLE SEARCH to find the official commercial details for this specific product:
        - The exact Net Weight or Volume (e.g. '50g', '330ml').
        - The full Ingredient List.
     
@@ -76,9 +81,18 @@ export const analyzeImage = async (base64Image: string): Promise<ScanResult> => 
       jsonStr = jsonStr.substring(start, end + 1);
     }
 
-    return JSON.parse(jsonStr) as ScanResult;
-  } catch (error) {
-    console.error("Error analyzing image:", error);
+    const result = JSON.parse(jsonStr);
+
+    // Check for explicit non-food error
+    if (result.error === 'not_food') {
+        throw new Error("NOT_FOOD");
+    }
+
+    return result as ScanResult;
+  } catch (error: any) {
+    if (error.message !== 'NOT_FOOD') {
+        console.error("Error analyzing image:", error);
+    }
     throw error;
   }
 };
