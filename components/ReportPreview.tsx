@@ -1,14 +1,13 @@
 import React from 'react';
 import { DeclaredItem } from '../types';
-import { X, Printer, ImageOff } from 'lucide-react';
+import { X, ImageOff } from 'lucide-react';
 
 interface ReportPreviewProps {
   items: DeclaredItem[];
-  destination: string;
   onClose: () => void;
 }
 
-const ReportPreview: React.FC<ReportPreviewProps> = ({ items, destination, onClose }) => {
+const ReportPreview: React.FC<ReportPreviewProps> = ({ items, onClose }) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 backdrop-blur-sm p-4 animate-in fade-in duration-300">
       <div className="bg-white w-full max-w-2xl max-h-[90vh] rounded-[2rem] shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-300">
@@ -17,7 +16,7 @@ const ReportPreview: React.FC<ReportPreviewProps> = ({ items, destination, onClo
         <div className="px-6 py-5 bg-slate-900 text-white flex items-center justify-between shrink-0">
           <div>
             <h3 className="text-xl font-bold tracking-tight">Report Preview</h3>
-            <p className="text-slate-400 text-xs mt-1">Ready for {destination}</p>
+            <p className="text-slate-400 text-xs mt-1">Ready for export</p>
           </div>
           <button onClick={onClose} className="p-2 bg-white/10 rounded-full hover:bg-white/20 transition-colors">
             <X className="w-5 h-5 text-white" />
@@ -32,12 +31,11 @@ const ReportPreview: React.FC<ReportPreviewProps> = ({ items, destination, onClo
             <div className="border-b-2 border-brand-500 pb-6 mb-6">
                <div className="flex justify-between items-start">
                   <div>
-                    <h1 className="text-2xl font-bold text-slate-900 uppercase tracking-wide">Customs Declaration</h1>
-                    <p className="text-slate-500 text-sm mt-1">Food Items List</p>
+                    <h1 className="text-2xl font-bold text-slate-900 uppercase tracking-wide">Food Inventory</h1>
+                    <p className="text-slate-500 text-sm mt-1">Item List</p>
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-bold text-slate-800">{new Date().toLocaleDateString()}</p>
-                    <p className="text-xs text-slate-400 uppercase tracking-wider font-bold">Destination: {destination}</p>
                   </div>
                </div>
             </div>
@@ -93,7 +91,7 @@ const ReportPreview: React.FC<ReportPreviewProps> = ({ items, destination, onClo
             {/* Footer Summary */}
             <div className="mt-8 pt-6 border-t border-slate-200 flex justify-end">
                <div className="text-right">
-                  <p className="text-sm text-slate-500">Total Items Declared</p>
+                  <p className="text-sm text-slate-500">Total Items Scanned</p>
                   <p className="text-2xl font-bold text-brand-500">{items.length}</p>
                </div>
             </div>

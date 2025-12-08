@@ -1,6 +1,6 @@
 {
-  "name": "FoodPass (Production)",
-  "description": "Smart customs declaration assistant. Scan items, categorize them automatically using AI, and generate a compliant PDF report.",
+  "name": "Food Scanner",
+  "description": "Smart food inventory assistant. Scan items, categorize them automatically using AI, and generate a list.",
   "requestFramePermissions": [
     "camera"
   ]

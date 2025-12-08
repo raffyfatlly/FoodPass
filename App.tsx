@@ -2,32 +2,22 @@ import React, { useState, useEffect } from 'react';
 import Scanner from './components/Scanner';
 import ItemForm from './components/ItemForm';
 import DeclarationList from './components/DeclarationList';
-import CountrySelector from './components/CountrySelector';
 import Notification, { NotificationType } from './components/Notification';
-import ChatAssistant from './components/ChatAssistant';
 import ReportPreview from './components/ReportPreview';
 import { DeclaredItem, ScanResult } from './types';
-import { analyzeImage, analyzeText, getCustomsAdvice } from './services/geminiService';
+import { analyzeImage, analyzeText } from './services/geminiService';
 import { generateDeclarationPDF } from './services/pdfService';
-import { Zap, FileText, MessageCircleQuestion, Eye } from 'lucide-react';
+import { Zap, FileText, Eye } from 'lucide-react';
 
 const App: React.FC = () => {
   // Use lazy initialization to reliably load from localStorage on first render
   const [items, setItems] = useState<DeclaredItem[]>(() => {
     try {
-      const saved = localStorage.getItem('customsItems');
+      const saved = localStorage.getItem('customsItems'); // Keeping storage key same to preserve data
       return saved ? JSON.parse(saved) : [];
     } catch (e) {
       console.error("Failed to load items", e);
       return [];
-    }
-  });
-
-  const [destinationCountry, setDestinationCountry] = useState<string>(() => {
-    try {
-      return localStorage.getItem('destinationCountry') || "Australia";
-    } catch (e) {
-      return "Australia";
     }
   });
 
@@ -36,7 +26,6 @@ const App: React.FC = () => {
   const [currentScan, setCurrentScan] = useState<ScanResult | null>(null);
   const [editingItem, setEditingItem] = useState<DeclaredItem | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [showChat, setShowChat] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   
   // Notification State
@@ -50,11 +39,6 @@ const App: React.FC = () => {
         console.error("Storage full", e);
     }
   }, [items]);
-
-  // Persist country whenever it changes
-  useEffect(() => {
-    localStorage.setItem('destinationCountry', destinationCountry);
-  }, [destinationCountry]);
 
   const showNotification = (msg: string, type: NotificationType) => {
       setNotification({ msg, type });
@@ -71,7 +55,7 @@ const App: React.FC = () => {
         const base64Content = fullBase64.split(',')[1];
         
         try {
-          const result = await analyzeImage(base64Content, destinationCountry);
+          const result = await analyzeImage(base64Content);
           setCurrentScan({ ...result, image: fullBase64 });
           setShowForm(true);
         } catch (err) {
@@ -95,7 +79,7 @@ const App: React.FC = () => {
     setIsProcessing(true);
     setErrorMsg(null);
     try {
-      const result = await analyzeText(query, destinationCountry);
+      const result = await analyzeText(query);
       setCurrentScan({ ...result, image: '' });
       setShowForm(true);
     } catch (err) {
@@ -143,16 +127,6 @@ const App: React.FC = () => {
     setShowForm(false);
     setCurrentScan(null);
     setEditingItem(null);
-
-    // AI Context Check - Triggered immediately after adding/updating
-    try {
-      setTimeout(async () => {
-        const advice = await getCustomsAdvice(updatedItems, destinationCountry);
-        showNotification(advice, "ai");
-      }, 500);
-    } catch (e) {
-      console.error("AI check failed", e);
-    }
   };
 
   const handleDeleteItem = (id: string) => {
@@ -170,12 +144,12 @@ const App: React.FC = () => {
   const handleExportPDF = async () => {
     if (items.length === 0) return;
     
-    showNotification("Generating compliant report...", "info");
+    showNotification("Generating inventory list...", "info");
     
     await new Promise(r => setTimeout(r, 500));
     generateDeclarationPDF(items);
     
-    showNotification("Report downloaded successfully!", "success");
+    showNotification("List downloaded successfully!", "success");
   };
 
   return (
@@ -190,18 +164,10 @@ const App: React.FC = () => {
         />
       )}
 
-      {/* Chat Assistant */}
-      <ChatAssistant 
-        isOpen={showChat} 
-        onClose={() => setShowChat(false)} 
-        destinationCountry={destinationCountry}
-      />
-
       {/* Report Preview Modal */}
       {showPreview && (
         <ReportPreview 
             items={items} 
-            destination={destinationCountry} 
             onClose={() => setShowPreview(false)} 
         />
       )}
@@ -213,30 +179,16 @@ const App: React.FC = () => {
               <Zap className="w-5 h-5 fill-current" />
            </div>
            <div>
-              <h1 className="font-bold text-lg tracking-tight text-slate-900 leading-none">FoodClear</h1>
-              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">Customs Assistant</p>
+              <h1 className="font-bold text-lg tracking-tight text-slate-900 leading-none">Food Scanner</h1>
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">Inventory Assistant</p>
            </div>
         </div>
-
-        {/* Chat Trigger Button */}
-        <button 
-          onClick={() => setShowChat(true)}
-          className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-600 hover:bg-brand-50 hover:text-brand-500 transition-colors active:scale-95"
-          title="Ask AI Expert"
-        >
-          <MessageCircleQuestion className="w-5 h-5" />
-        </button>
       </header>
 
       <main className="max-w-md mx-auto px-6 pt-6 pb-12 flex flex-col items-center">
         
-        {/* Country Selector - Top Center */}
-        <section className="animate-in slide-in-from-bottom-5 duration-500 delay-100 w-full mb-6">
-           <CountrySelector value={destinationCountry} onChange={setDestinationCountry} />
-        </section>
-
         {/* Scanner - Hero */}
-        <section className="animate-in slide-in-from-bottom-5 duration-500 delay-200 w-full mb-8">
+        <section className="animate-in slide-in-from-bottom-5 duration-500 delay-200 w-full mb-8 mt-4">
           <Scanner 
             onScan={handleScan} 
             onTextSearch={handleTextSearch}
@@ -280,7 +232,7 @@ const App: React.FC = () => {
               className="flex-[2] bg-brand-500 text-white font-bold text-lg py-4 rounded-[1.25rem] shadow-2xl shadow-brand-500/40 flex items-center justify-center gap-2 active:scale-[0.97] transition-all hover:bg-brand-600 hover:shadow-brand-500/50"
             >
                <FileText className="w-5 h-5" />
-               <span className="text-base">Download PDF</span>
+               <span className="text-base">Export PDF</span>
             </button>
          </div>
       </div>
