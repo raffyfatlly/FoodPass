@@ -4,6 +4,14 @@
 const STORAGE_KEY = 'food_scanner_auth_token';
 const DEVICE_ID_KEY = 'food_scanner_device_id';
 
+// ------------------------------------------------------------------
+// PASTE YOUR GOOGLE SCRIPT WEB APP URL BELOW
+// Example: "https://script.google.com/macros/s/AKfycbx.../exec"
+// ------------------------------------------------------------------
+const API_ENDPOINT: string = "https://script.google.com/macros/s/AKfycbyNhUx7aFh0f22vqXOACgF3J7gPLlZU_SwOzF4z3v4KBWzil2oFuQXsiG_8MupotPi8/exec"; 
+// ------------------------------------------------------------------
+
+
 // Generate a random device ID if one doesn't exist
 export const getDeviceId = (): string => {
   let deviceId = localStorage.getItem(DEVICE_ID_KEY);
@@ -18,11 +26,51 @@ export const isAuthenticated = (): boolean => {
   return !!localStorage.getItem(STORAGE_KEY);
 };
 
-export const validateAccessCode = async (code: string): Promise<boolean> => {
-  // SIMULATED NETWORK DELAY
+interface ValidationResult {
+    valid: boolean;
+    message?: string;
+}
+
+export const validateAccessCode = async (code: string, deviceId: string): Promise<ValidationResult> => {
+  const normalizedCode = code.trim().toUpperCase();
+
+  // 1. Special bypass for your testing (Always allowed on any device)
+  if (normalizedCode === 'RAFF-TEST') {
+      localStorage.setItem(STORAGE_KEY, 'valid_session_test');
+      return { valid: true };
+  }
+
+  // 2. Remote Validation (Strict "One Device" Policy via Google Sheet)
+  if (API_ENDPOINT && API_ENDPOINT.length > 5) {
+      try {
+          // 'redirect: follow' is required for Google Apps Script Web Apps
+          const response = await fetch(API_ENDPOINT, {
+              method: 'POST',
+              redirect: 'follow', 
+              headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // 'text/plain' avoids CORS preflight issues with GAS
+              body: JSON.stringify({ action: 'verify', code: normalizedCode, deviceId: deviceId })
+          });
+
+          const data = await response.json();
+          
+          if (data.valid) {
+              localStorage.setItem(STORAGE_KEY, 'valid_session_' + Date.now());
+              return { valid: true };
+          } else {
+              return { valid: false, message: data.message || "Invalid or used code" };
+          }
+      } catch (error) {
+          console.error("Validation error", error);
+          return { valid: false, message: "Connection failed. Please check internet." };
+      }
+  }
+
+  // 3. Local Fallback (Only runs if you haven't pasted the URL yet)
+  // WARNING: This DOES NOT enforce "One Device" across the internet. 
+  // It only checks if the code exists in this list.
+  
   await new Promise(resolve => setTimeout(resolve, 800));
 
-  // The provided list of 100 codes
   const validCodes = [
     "X7K9-M2P4", "Q3L8-R5T1", "A9J4-B6V2", "W2N7-X5Z8", "E4R9-T1Y6",
     "U8I3-O2P5", "S6D4-F9G2", "H1J7-K5L3", "Z8X2-C4V6", "B3N9-M1Q5",
@@ -43,19 +91,16 @@ export const validateAccessCode = async (code: string): Promise<boolean> => {
     "C3V6-B2N9", "M9Q4-W1E5", "R2T7-Y6U3", "I9O1-P8A5", "S4D2-F6G8",
     "H5J8-K3L9", "Z7X4-C1V2", "B6N1-M3Q7", "W3E5-R7T9", "Y9U6-I4O2",
     "P8A1-S7D5", "F3G9-H2J6", "K1L5-Z4X8", "C7V3-B6N2", "M4Q8-W2E9",
-    "R6T1-Y9U5", "I2O8-P3A7", "S1D4-F5G9", "H8J2-K6L3", "Z5X7-C9V1",
-    "RAFF-TEST"
+    "R6T1-Y9U5", "I2O8-P3A7", "S1D4-F5G9", "H8J2-K6L3", "Z5X7-C9V1"
   ];
-  
-  const normalizedCode = code.trim().toUpperCase();
   
   if (validCodes.includes(normalizedCode)) {
     // Lock the session
     localStorage.setItem(STORAGE_KEY, 'valid_session_' + Date.now());
-    return true;
+    return { valid: true };
   }
   
-  return false;
+  return { valid: false, message: "Invalid code. Please try again." };
 };
 
 export const logout = () => {

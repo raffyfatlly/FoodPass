@@ -1,32 +1,6 @@
+
 import { GoogleGenAI, Type, Schema } from "@google/genai";
 import { ScanResult, DeclaredItem } from "../types";
-
-// Helper to securely retrieve API key from various environment configurations
-const getApiKey = (): string => {
-  // Priority 1: Vite Environment Variables (Vercel/Netlify standard)
-  try {
-    // @ts-ignore
-    if (import.meta && import.meta.env && import.meta.env.VITE_API_KEY) {
-      // @ts-ignore
-      return import.meta.env.VITE_API_KEY;
-    }
-  } catch (e) {
-    // import.meta.env might not be defined or available
-  }
-  
-  // Priority 2: Process Environment Variables (Node/Webpack/Legacy)
-  try {
-    // Accessing 'process' directly can crash Vite/Browser if not polyfilled, so we wrap in try/catch
-    if (typeof process !== 'undefined' && process.env && process.env.API_KEY) {
-      return process.env.API_KEY;
-    }
-  } catch (e) {
-    // Ignore ReferenceError if process is not defined
-  }
-  
-  // Fallback or empty (will cause API error if not set)
-  return "";
-};
 
 const itemSchema: Schema = {
   type: Type.OBJECT,
@@ -57,7 +31,7 @@ const itemSchema: Schema = {
 
 export const analyzeImage = async (base64Image: string): Promise<ScanResult> => {
   try {
-    const ai = new GoogleGenAI({ apiKey: getApiKey() });
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     
     const prompt = `Analyze this food item.
     1. Identify the Brand and Product Name.
@@ -101,7 +75,7 @@ export const analyzeImage = async (base64Image: string): Promise<ScanResult> => 
 
 export const analyzeText = async (query: string): Promise<ScanResult> => {
   try {
-    const ai = new GoogleGenAI({ apiKey: getApiKey() });
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     
     const prompt = `User is listing a food item: "${query}".
     1. Identify the Brand and likely Product Name.
@@ -135,7 +109,7 @@ export const analyzeText = async (query: string): Promise<ScanResult> => {
 
 export const chatWithCustomsAgent = async (history: any[], message: string, destinationCountry: string): Promise<string> => {
   try {
-    const ai = new GoogleGenAI({ apiKey: getApiKey() });
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     
     const chat = ai.chats.create({
       model: "gemini-2.5-flash",

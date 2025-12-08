@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { ArrowRight, Zap, AlertCircle, Smartphone } from 'lucide-react';
 import { validateAccessCode, getDeviceId } from '../services/authService';
@@ -31,11 +32,11 @@ const AccessGate: React.FC<AccessGateProps> = ({ onUnlock }) => {
     setError(null);
 
     try {
-      const isValid = await validateAccessCode(code);
-      if (isValid) {
+      const result = await validateAccessCode(code, deviceId);
+      if (result.valid) {
         onUnlock();
       } else {
-        setError('Invalid code. Please try again.');
+        setError(result.message || 'Invalid code');
       }
     } catch (err) {
       setError('Connection error. Please try again.');
