@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { DeclaredItem, ScanResult } from '../types';
 import { X, Camera, Sparkles, Scale } from 'lucide-react';
+import { analyzeText } from '../services/geminiService';
 
 interface ItemFormProps {
   initialData?: Partial<DeclaredItem> | ScanResult;
@@ -18,6 +19,8 @@ const ItemForm: React.FC<ItemFormProps> = ({ initialData, onSave, onCancel }) =>
     image: '',
   });
 
+  const [isAutoFilling, setIsAutoFilling] = useState(false);
+
   useEffect(() => {
     if (initialData) {
       setFormData({
@@ -33,7 +36,6 @@ const ItemForm: React.FC<ItemFormProps> = ({ initialData, onSave, onCancel }) =>
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Removed strict image validation to allow manual entry without photo
     onSave(formData);
   };
 
@@ -44,6 +46,27 @@ const ItemForm: React.FC<ItemFormProps> = ({ initialData, onSave, onCancel }) =>
         setFormData(prev => ({ ...prev, image: reader.result as string }));
       };
       reader.readAsDataURL(e.target.files[0]);
+    }
+  };
+
+  const handleAutoFill = async () => {
+    const query = [formData.brand, formData.name].filter(Boolean).join(' ');
+    if (!query.trim()) return;
+
+    setIsAutoFilling(true);
+    try {
+      const result = await analyzeText(query);
+      setFormData(prev => ({
+        ...prev,
+        brand: result.brand || prev.brand,
+        name: result.name || prev.name,
+        ingredients: result.ingredients || prev.ingredients,
+        weight: result.weight || prev.weight
+      }));
+    } catch (error) {
+      console.error("Auto-fill error:", error);
+    } finally {
+      setIsAutoFilling(false);
     }
   };
 
@@ -117,14 +140,29 @@ const ItemForm: React.FC<ItemFormProps> = ({ initialData, onSave, onCancel }) =>
                 
                 <div className="space-y-2">
                     <label className="text-xs font-bold text-slate-400 ml-1 uppercase tracking-wider">Product Name</label>
-                    <input
-                        type="text"
-                        required
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        className="w-full px-5 py-4 rounded-2xl bg-slate-50 border border-transparent text-slate-800 font-bold text-lg placeholder:text-slate-300 focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500/20 focus:bg-white transition-all outline-none"
-                        placeholder="e.g. KitKat Gold"
-                    />
+                    <div className="relative">
+                      <input
+                          type="text"
+                          required
+                          value={formData.name}
+                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                          className="w-full pl-5 pr-14 py-4 rounded-2xl bg-slate-50 border border-transparent text-slate-800 font-bold text-lg placeholder:text-slate-300 focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500/20 focus:bg-white transition-all outline-none"
+                          placeholder="e.g. KitKat Gold"
+                      />
+                      <button
+                          type="button"
+                          onClick={handleAutoFill}
+                          disabled={isAutoFilling || !formData.name.trim()}
+                          className="absolute right-2 top-2 bottom-2 w-10 flex items-center justify-center rounded-xl bg-white text-brand-500 shadow-sm border border-slate-100 hover:bg-brand-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95 z-10"
+                          title="Auto-fill details with AI"
+                      >
+                          {isAutoFilling ? (
+                              <div className="w-5 h-5 border-2 border-brand-200 border-t-brand-500 rounded-full animate-spin" />
+                          ) : (
+                              <Sparkles className="w-5 h-5" />
+                          )}
+                      </button>
+                    </div>
                 </div>
              </div>
           
@@ -132,7 +170,7 @@ const ItemForm: React.FC<ItemFormProps> = ({ initialData, onSave, onCancel }) =>
             <div className="space-y-2">
                 <div className="flex items-center justify-between ml-1">
                     <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Ingredients List</label>
-                    {initialData && initialData.ingredients && (
+                    {((initialData && initialData.ingredients && initialData.ingredients === formData.ingredients) || isAutoFilling) && (
                         <div className="flex items-center gap-1 text-xs font-bold text-brand-500 bg-brand-50 px-2 py-0.5 rounded-md">
                             <Sparkles className="w-3 h-3" />
                             <span>AI Detected</span>
