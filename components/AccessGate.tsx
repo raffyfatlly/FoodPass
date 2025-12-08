@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { ArrowRight, Zap, AlertCircle, Smartphone } from 'lucide-react';
 import { validateAccessCode, getDeviceId } from '../services/authService';
@@ -77,8 +76,9 @@ const AccessGate: React.FC<AccessGateProps> = ({ onUnlock }) => {
                   setCode(e.target.value.toUpperCase());
                   setError(null);
                 }}
-                placeholder="XXXX-XXXX-XXXX"
-                className={`w-full text-center text-xl font-bold tracking-widest py-4 rounded-2xl bg-slate-50 border-2 outline-none transition-all placeholder:text-slate-300 text-slate-800 uppercase
+                placeholder="XXXX-XXXX"
+                maxLength={9}
+                className={`w-full text-center text-2xl font-bold tracking-widest py-4 rounded-2xl bg-slate-50 border-2 outline-none transition-all placeholder:text-slate-200 text-slate-800 uppercase
                   ${error ? 'border-red-100 bg-red-50 text-red-600' : 'border-transparent focus:border-brand-500/30 focus:bg-white focus:ring-4 focus:ring-brand-500/10'}
                 `}
               />

@@ -9,8 +9,8 @@ import AccessGate from './components/AccessGate';
 import { DeclaredItem, ScanResult } from './types';
 import { analyzeImage, analyzeText } from './services/geminiService';
 import { generateDeclarationPDF } from './services/pdfService';
-import { isAuthenticated } from './services/authService';
-import { Zap, FileText, Eye } from 'lucide-react';
+import { isAuthenticated, logout } from './services/authService';
+import { Zap, FileText, Eye, LogOut } from 'lucide-react';
 
 const App: React.FC = () => {
   // Auth State
@@ -166,6 +166,12 @@ const App: React.FC = () => {
     showNotification("List downloaded successfully!", "success");
   };
 
+  const handleLogout = () => {
+    if (window.confirm("Exit session? You will need to enter your code again.")) {
+      logout();
+    }
+  };
+
   // --- Auth Guard ---
   if (!authChecked) return null; // Or a loading spinner
   
@@ -204,6 +210,14 @@ const App: React.FC = () => {
               <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">Inventory Assistant</p>
            </div>
         </div>
+        
+        <button 
+          onClick={handleLogout}
+          className="p-2.5 rounded-xl bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+          title="Exit Session"
+        >
+          <LogOut className="w-5 h-5" />
+        </button>
       </header>
 
       <main className="max-w-md mx-auto px-6 pt-6 pb-12 flex flex-col items-center">
